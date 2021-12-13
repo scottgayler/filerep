@@ -1,3 +1,6 @@
+## Edited VMware provided python script to remove userconfirmation
+##              Commenting out the user verification prompt lines 344-348
+
 import sys
 import os
 import subprocess
@@ -338,11 +341,11 @@ def main():
     verifystsd = verifyidmd = verifypscclient = False
     do_analytics = False
     print("This script will help to automate the steps described in VMware KB https://kb.vmware.com/s/article/87081\n")
-    userconfirmation = inputfunction("All Services will be restarted by the script to mitigate the VMSA, Please enter YES to proceed further or NO to Exit [[Yes/No/Y/N]] ? ")
-    if userconfirmation.lower() not in ['y','Y','Yes','YES','yes','yES','yeS']:
-        print(color_green("Terminating the script based on user input, you may follow the steps described in https://kb.vmware.com/s/article/87081 "))
-        traceback.print_exc()
-        exit(1)
+    #userconfirmation = inputfunction("All Services will be restarted by the script to mitigate the VMSA, Please enter YES to proceed further or NO to Exit [[Yes/No/Y/N]] ? ")
+    #if userconfirmation.lower() not in ['y','Y','Yes','YES','yes','yES','yeS']:
+    #    print(color_green("Terminating the script based on user input, you may follow the steps described in https://kb.vmware.com/s/article/87081 "))
+    #    traceback.print_exc()
+    #    exit(1)
     try:
         if vcversion.startswith("7.0") or vcversion.startswith("6.7") or vcversion.startswith("6.5"):
             vmon_remediation(vmon_config_file)
