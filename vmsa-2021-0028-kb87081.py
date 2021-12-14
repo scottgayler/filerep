@@ -1,5 +1,5 @@
 ## Edited VMware provided python script to remove userconfirmation
-##              Commenting out the user verification prompt lines 344-348
+##              Commenting out the user verification prompt lines 362 - 365 
 
 import sys
 import os
@@ -59,8 +59,6 @@ else:
             break
     vcversion = vcversion.rsplit(' ', 1)[1]
     vcversion = vcversion.strip()
-
-deployment_type = get_install_parameter('deployment.node.type')
 
 if sys.version_info[0] < 3:
     inputfunction = raw_input
@@ -298,6 +296,23 @@ def verify_jndilookup(jar_path):
         return False
 
 """
+Check availability of file
+"""
+def is_file_exists(file_name_to_verify):
+    if os.path.isfile(file_name_to_verify):
+        return True
+    else:
+        return False
+
+"""
+Check for VCHA Configuaration
+"""
+def is_vcha_node():
+    if os.path.isfile("/etc/vmware-vcha/vcha.cfg"):
+        return True
+    else:
+        return False
+"""
 This function helps to restart all services
 """
 def restart_all_services(action):
@@ -340,29 +355,34 @@ def main():
     vmonstatus = vumstatus = analyticsstatus = dbccstatus = cmstatus = stsdstatus = stsidmdstatus = pscclientstatus = True
     verifystsd = verifyidmd = verifypscclient = False
     do_analytics = False
-    print("This script will help to automate the steps described in VMware KB https://kb.vmware.com/s/article/87081\n")
-    #userconfirmation = inputfunction("All Services will be restarted by the script to mitigate the VMSA, Please enter YES to proceed further or NO to Exit [[Yes/No/Y/N]] ? ")
-    #if userconfirmation.lower() not in ['y','Y','Yes','YES','yes','yES','yeS']:
-    #    print(color_green("Terminating the script based on user input, you may follow the steps described in https://kb.vmware.com/s/article/87081 "))
-    #    traceback.print_exc()
-    #    exit(1)
+    print("\nThis script will help to automate the steps described in VMware KB https://kb.vmware.com/s/article/87081\n")
+    if is_vcha_node():
+        print(color_red("You need to remove VCHA to apply the workarounds as mentioned in Impacts section of KB https://kb.vmware.com/s/article/87081\n"))
+        exit(1)
+#    userconfirmation = inputfunction("All Services will be restarted by the script to mitigate the VMSA, Please enter YES to proceed further or NO to Exit [[Yes/No/Y/N]] ? ")
+#    if userconfirmation.lower() not in ['y','Y','Yes','YES','yes','yES','yeS']:
+#        print(color_green("Terminating the script based on user input, you may follow the steps described in https://kb.vmware.com/s/article/87081 "))
+#        exit(1)
     try:
         if vcversion.startswith("7.0") or vcversion.startswith("6.7") or vcversion.startswith("6.5"):
             vmon_remediation(vmon_config_file)
         if vcversion.startswith("6.5") or vcversion.startswith("6.7"):
-            if deployment_type in ["embedded","infrastructure"]:
+            if is_file_exists(stsd_config_file):
                 verifystsd = True
-                verifyidmd = True
                 stsd_remediation(stsd_config_file)
+            else:
+                print(color_green("\nSkipping SSO STSD check, this check is not required on Management vCenter pointing to External PSC"))
+            if is_file_exists(idmd_config_file):
+                verifyidmd = True
                 idmd_remediation(idmd_config_file)
             else:
-                print(color_green("\nSkipping STSD & IDMD checks as this is a Management Node pointing to External PSC"))
+                print(color_green("\nSkipping SSO IDMD check, this check is not required on Management vCenter pointing to External PSC"))
         if vcversion.startswith("6.5"):
-            if deployment_type in ["embedded","infrastructure"]:
+            if is_file_exists(pscclient_config_file):
                 verifypscclient = True
                 pscclient_remediation(pscclient_config_file)
             else:
-                print(color_green("\nSkipping psc-client check as this is a Management Node pointing to External PSC"))
+                print(color_green("\nSkipping PSC Client check, this check is not required on Management vCenter pointing to External PSC"))
         if vcversion.startswith("7.0"):
             vum_remediation(vum_config_file)
         if vcversion.startswith("7.0") or (vcversion.startswith("6.7") and int(vcversion.split('.')[3]) <= 50000):
